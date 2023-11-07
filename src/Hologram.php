@@ -106,8 +106,8 @@ class Hologram {
             return;
         }
         $nameTag = TextFormat::colorize($this->lines);
-        if(PrimeHologram::getInstance()->getPlaceholder() != null){
-            $nameTag = PrimeHologram::getInstance()->getPlaceholder()->setPlaceHolders($nameTag, $player);
+        if(PrimeHologram::getInstance()->getPlaceHolderHook() != null){
+            $nameTag = PrimeHologram::getInstance()->getPlaceHolderHook()->setPlaceHolders($nameTag, $player);
         }
         $nameTag = str_replace("%player%", $player->getName(), $nameTag);
         //split $nameTag lines into array and check if there is an empty line
@@ -131,8 +131,8 @@ class Hologram {
 
         $text = TextFormat::colorize($this->lines);
         $text = str_replace("%player%", $player->getName(), $text);
-        if(PrimeHologram::getInstance()->getPlaceholder() != null){
-            $text = PrimeHologram::getInstance()->getPlaceholder()->setPlaceHolders($text, $player);
+        if(PrimeHologram::getInstance()->getPlaceHolderHook() !== null){
+            $text = PrimeHologram::getInstance()->getPlaceHolderHook()->setPlaceHolders($text, $player);
         }
         $p = [];
 
@@ -178,7 +178,6 @@ class Hologram {
         if(!isset($this->spawnedTo[spl_object_id($player)]) or !$player->isOnline()) {
             return;
         }
-
         $player->getNetworkSession()->sendDataPacket(RemoveActorPacket::create($this->entityId));
 
         unset($this->spawnedTo[spl_object_id($player)]);

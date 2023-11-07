@@ -10,8 +10,8 @@ declare(strict_types=1);
 
 namespace nasiridrishi\primehologram;
 
-use nasiridrishi\primeplaceholder\PrimePlaceHolder;
-use pocketmine\plugin\Plugin;
+use nasiridrishi\primehologram\hook\PrimeHook;
+use nasiridrishi\primehologram\hook\PrimePlaceHolderHook;
 use pocketmine\plugin\PluginBase;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\Server;
@@ -22,8 +22,7 @@ use pocketmine\world\World;
 class PrimeHologram extends PluginBase{
 
     private static PrimeHologram $instance;
-
-    private ?PrimePlaceHolder $placeholder = null;
+    private ?PrimePlaceHolderHook  $placeHolderHook = null;
 
     /**
      * @return PrimeHologram
@@ -51,7 +50,7 @@ class PrimeHologram extends PluginBase{
      */
     protected function onEnable(): void {
 
-        $this->placeholder = $this->findPlugins("PrimePlaceHolder");
+        $this->placeHolderHook = $this->findHook("PrimePlaceHolder", PrimePlaceHolderHook::class);
 
         $this->getServer()->getPluginManager()->registerEvents(new HologramListener($this), $this);
         $this->getScheduler()->scheduleRepeatingTask(new ClosureTask(function(): void {
@@ -141,23 +140,23 @@ class PrimeHologram extends PluginBase{
         }
     }
 
-    private function findPlugins(string $name, bool $required = false): ?Plugin {
-        $plugin = Server::getInstance()->getPluginManager()->getPlugin($name);
+    private function findHook(string $pluginName, string $hookClass, bool $required = false): ?PrimeHook {
+        $plugin = Server::getInstance()->getPluginManager()->getPlugin($pluginName);
         if($plugin === null){
             if($required){
-                $this->getLogger()->error("Could not find plugin " . $name . "!");
+                $this->getLogger()->error("Could not find plugin " . $pluginName . "!");
                 $this->getServer()->getPluginManager()->disablePlugin($this);
             }
             return null;
         }
-        $this->getLogger()->info("Found supported plugin " . $name . "!");
-        return $plugin;
+        $this->getLogger()->info("Found supported plugin " . $pluginName . "!");
+        return new $hookClass($plugin);
     }
 
     /**
-     * @return PrimePlaceHolder|null
+     * @return PrimePlaceHolderHook|null
      */
-    public function getPlaceholder(): ?PrimePlaceHolder {
-        return $this->placeholder;
+    public function getPlaceHolderHook(): ?PrimePlaceHolderHook {
+        return $this->placeHolderHook;
     }
 }
