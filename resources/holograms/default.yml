@@ -1,0 +1,7 @@
+position: world;0;0;0
+enabled: false
+lines:
+  - '&7Welcome to the server!'
+  - '&e'
+  - '&7You name: %player%'
+  - '&7You are currently playing on &aServer Name&7!'

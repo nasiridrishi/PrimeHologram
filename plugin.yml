@@ -1,0 +1,8 @@
+name: PrimeHologram
+main: nasiridrishi\primehologram\PrimeHologram
+src-namespace-prefix: nasiridrishi\primehologram
+version: 1.0.0
+api: [5.0.0]
+author: nasiridrishi
+softdepend:
+  - PrimePlaceHolder
