@@ -6,4 +6,7 @@ A packet based simple hologram plugin for [PocketMine](https://i.imgur.com/qpnk5
 
 ---
 
+### What's new?
+- [x] Added animations.
+
 ### [Help/Report Bugs(Discord)](https://discord.gg/eqxV2HEkhh)
