@@ -100,7 +100,7 @@ class PrimeHologram extends PluginBase{
         if(isset($this->taskHandler) and !$this->taskHandler->isCancelled()){
             $this->taskHandler->cancel();
         }
-        $this->getScheduler()->scheduleRepeatingTask(new ClosureTask(function(): void {
+        $this->taskHandler = $this->getScheduler()->scheduleRepeatingTask(new ClosureTask(function(): void {
             foreach($this->holograms as $hologram) {
                 $hologram->doUpdate();
             }
