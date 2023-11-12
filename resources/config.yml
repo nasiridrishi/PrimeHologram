@@ -1,0 +1,12 @@
+# How often the holograms should be updated (in ticks) (20 ticks = 1 second)
+refresh-rate: 20
+
+animations:
+  # The animation name
+  example:
+    # The animation lines (supports placeholders: https://github.com/nasiridrishi/PrimeScoreboard)
+    lines:
+      - "Hello World 1"
+      - "Hello World 2"
+      - "Hello World 3"
+      - "Hello World 3"

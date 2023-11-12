@@ -3,6 +3,7 @@
 namespace nasiridrishi\primehologram;
 
 use JsonException;
+use nasiridrishi\primehologram\animation\AnimationManager;
 use pocketmine\entity\Entity;
 use pocketmine\entity\Skin;
 use pocketmine\network\mcpe\convert\TypeConverter;
@@ -99,10 +100,11 @@ class Hologram {
             return;
         }
         $nameTag = TextFormat::colorize($this->lines);
+        $nameTag = str_replace("%player%", $player->getName(), $nameTag);
+        $nameTag = AnimationManager::getInstance()->setAnimations($nameTag);
         if(PrimeHologram::getInstance()->getPlaceHolderHook() != null){
             $nameTag = PrimeHologram::getInstance()->getPlaceHolderHook()->setPlaceHolders($nameTag, $player);
         }
-        $nameTag = str_replace("%player%", $player->getName(), $nameTag);
         //split $nameTag lines into array and check if there is an empty line
         $pk = new SetActorDataPacket();
         $pk->syncedProperties = new PropertySyncData([], []);
@@ -124,6 +126,7 @@ class Hologram {
 
         $text = TextFormat::colorize($this->lines);
         $text = str_replace("%player%", $player->getName(), $text);
+        $text = AnimationManager::getInstance()->setAnimations($text);
         if(PrimeHologram::getInstance()->getPlaceHolderHook() !== null){
             $text = PrimeHologram::getInstance()->getPlaceHolderHook()->setPlaceHolders($text, $player);
         }

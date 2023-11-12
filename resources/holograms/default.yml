@@ -5,3 +5,4 @@ lines:
   - '&e'
   - '&7You name: %player%'
   - '&7You are currently playing on &aServer Name&7!'
+  - '{animation:example}' #see config.yml::animations

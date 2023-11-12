@@ -2,11 +2,14 @@
 
 namespace nasiridrishi\primehologram;
 
+use nasiridrishi\primehologram\animation\AnimationManager;
 use nasiridrishi\primehologram\hook\PrimeHook;
 use nasiridrishi\primehologram\hook\PrimePlaceHolderHook;
 use pocketmine\plugin\PluginBase;
 use pocketmine\scheduler\ClosureTask;
+use pocketmine\scheduler\TaskHandler;
 use pocketmine\Server;
+use pocketmine\utils\Config;
 use pocketmine\utils\TextFormat;
 use pocketmine\world\Position;
 use pocketmine\world\World;
@@ -15,6 +18,8 @@ class PrimeHologram extends PluginBase{
 
     private static PrimeHologram $instance;
     private ?PrimePlaceHolderHook  $placeHolderHook = null;
+
+    private AnimationManager $animationManager;
 
     /**
      * @return PrimeHologram
@@ -28,6 +33,8 @@ class PrimeHologram extends PluginBase{
      */
     private array $holograms = [];
 
+    private TaskHandler $taskHandler;
+
     /**
      * @var Hologram[][]|array<int, array<int, Hologram>>
      */
@@ -35,6 +42,7 @@ class PrimeHologram extends PluginBase{
 
     protected function onLoad(): void {
         self::$instance = $this;
+        $this->animationManager = new AnimationManager();
     }
 
     /**
@@ -45,12 +53,34 @@ class PrimeHologram extends PluginBase{
         $this->placeHolderHook = $this->findHook("PrimePlaceHolder", PrimePlaceHolderHook::class);
 
         $this->getServer()->getPluginManager()->registerEvents(new HologramListener($this), $this);
+        $this->fromConfig();
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    private function reloadPlugin(): void{
+        $this->reloadConfig();
+        //de-spawn all holograms
+        foreach($this->holograms as $hologram) {
+            foreach($this->getServer()->getOnlinePlayers() as $player) {
+                $hologram->despawnFrom($player);
+            }
+        }
+        $this->holograms = [];
+        $this->hologramWorlds = [];
+        $this->fromConfig();
+    }
+
+    private function startHologramTicks(): void{
+        if(isset($this->taskHandler) and !$this->taskHandler->isCancelled()){
+            $this->taskHandler->cancel();
+        }
         $this->getScheduler()->scheduleRepeatingTask(new ClosureTask(function(): void {
             foreach($this->holograms as $hologram) {
                 $hologram->doUpdate();
             }
         }), 20);
-        $this->fromConfig();
     }
 
     /**
@@ -100,11 +130,7 @@ class PrimeHologram extends PluginBase{
             $this->saveResource("holograms/default.yml");
         }else{
             foreach($files as $file) {
-                $config = yaml_parse_file($holoDir . $file);
-                if($config === false) {
-                    $this->getLogger()->warning("Could not load hologram " . $file . "!");
-                    continue;
-                }
+                $config = new Config($file, Config::YAML);
                 if(!$config["enabled"]) {
                     continue;
                 }
@@ -150,5 +176,12 @@ class PrimeHologram extends PluginBase{
      */
     public function getPlaceHolderHook(): ?PrimePlaceHolderHook {
         return $this->placeHolderHook;
+    }
+
+    /**
+     * @return AnimationManager
+     */
+    public function getAnimationManager(): AnimationManager {
+        return $this->animationManager;
     }
 }
