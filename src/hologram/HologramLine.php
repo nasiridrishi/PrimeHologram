@@ -1,9 +1,10 @@
 <?php
 
-namespace nasiridrishi\primehologram;
+namespace nasiridrishi\primehologram\hologram;
 
 use JsonException;
 use nasiridrishi\primehologram\animation\AnimationManager;
+use nasiridrishi\primehologram\PrimeHologram;
 use pocketmine\entity\Entity;
 use pocketmine\entity\Skin;
 use pocketmine\network\mcpe\convert\TypeConverter;
@@ -30,9 +31,8 @@ use pocketmine\world\Position;
 use pocketmine\world\World;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
-use function str_repeat;
 
-class Hologram {
+class HologramLine {
 
     /** @var SkinData|null */
     private static ?SkinData $skinData = null;
@@ -40,23 +40,13 @@ class Hologram {
     protected int $entityId;
     protected UuidInterface $uuid;
 
-    /** @var Player[] */
-    private array $spawnedTo = [];
-
     /** @var RemoveActorPacket */
     private RemoveActorPacket $despawnPacket;
 
     /**
      * @throws JsonException
      */
-    public static function new(Position $position, string $lines): self {
-        return new self($position, $lines);
-    }
-
-    /**
-     * @throws JsonException
-     */
-    public function __construct(private Position $position, private string $lines) {
+    public function __construct(private Hologram $hologram, private Position $position, private string $line) {
 
         $this->entityId = Entity::nextRuntimeId();
         $this->uuid = Uuid::uuid4();
@@ -67,6 +57,13 @@ class Hologram {
         if(self::$skinData === null) {
             self::$skinData = TypeConverter::getInstance()->getSkinAdapter()->toSkinData(new Skin("Standard_Custom", str_repeat("\x00", 8192)));
         }
+    }
+
+    /**
+     * @return Hologram
+     */
+    public function getHologram(): Hologram {
+        return $this->hologram;
     }
 
     public function getId(): int {
@@ -84,24 +81,15 @@ class Hologram {
         return $this->position;
     }
 
-    public function doUpdate(): void {
-        foreach($this->spawnedTo as $player) {
-            $this->updateFor($player);
-        }
-    }
-
     /**
      * Update the hologram for a player.
      *
      * @param Player $player
      */
     public function updateFor(Player $player): void {
-        if(!isset($this->spawnedTo[spl_object_id($player)]) or !$player->isOnline()) {
-            return;
-        }
-        $nameTag = TextFormat::colorize($this->lines);
+        $nameTag = TextFormat::colorize($this->line);
         $nameTag = str_replace("%player%", $player->getName(), $nameTag);
-        $nameTag = AnimationManager::getInstance()->setAnimations($nameTag);
+        $nameTag = AnimationManager::getInstance()->setFrames($nameTag);
         if(PrimeHologram::getInstance()->getPlaceHolderHook() != null){
             $nameTag = PrimeHologram::getInstance()->getPlaceHolderHook()->setPlaceHolders($nameTag, $player);
         }
@@ -120,13 +108,9 @@ class Hologram {
      * @param Player $player
      */
     public function spawnTo(Player $player): void {
-        if(isset($this->spawnedTo[spl_object_id($player)]) or !$player->isOnline()) {
-            return;
-        }
-
-        $text = TextFormat::colorize($this->lines);
+        $text = TextFormat::colorize($this->line);
         $text = str_replace("%player%", $player->getName(), $text);
-        $text = AnimationManager::getInstance()->setAnimations($text);
+        $text = AnimationManager::getInstance()->setFrames($text);
         if(PrimeHologram::getInstance()->getPlaceHolderHook() !== null){
             $text = PrimeHologram::getInstance()->getPlaceHolderHook()->setPlaceHolders($text, $player);
         }
@@ -161,8 +145,6 @@ class Hologram {
         foreach($p as $pk) {
             $player->getNetworkSession()->sendDataPacket($pk);
         }
-
-        $this->spawnedTo[spl_object_id($player)] = $player;
     }
 
     /**
@@ -171,12 +153,7 @@ class Hologram {
      * @param Player $player
      */
     public function despawnFrom(Player $player): void {
-        if(!isset($this->spawnedTo[spl_object_id($player)]) or !$player->isOnline()) {
-            return;
-        }
         $player->getNetworkSession()->sendDataPacket(RemoveActorPacket::create($this->entityId));
-
-        unset($this->spawnedTo[spl_object_id($player)]);
     }
 
     public function deSpawnFromAll(): void {
@@ -184,5 +161,4 @@ class Hologram {
             $this->despawnFrom($player);
         }
     }
-
 }

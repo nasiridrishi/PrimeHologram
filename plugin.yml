@@ -6,3 +6,13 @@ api: [5.0.0]
 author: nasiridrishi
 softdepend:
   - PrimePlaceHolder
+
+commands:
+  holoreload:
+    description: "Realod holograms"
+    usage: "/holoreload"
+    permission: "prime.holoreload"
+permissions:
+  prime.holoreload:
+    description: "Realod holograms"
+    default: op

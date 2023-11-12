@@ -2,6 +2,8 @@
 
 namespace nasiridrishi\primehologram\animation;
 
+use pocketmine\utils\TextFormat;
+
 class Animation {
 
     private array $frames = [];
@@ -10,6 +12,9 @@ class Animation {
 
     public function __construct(array $frames) {
         $this->frames = $frames;
+        foreach($this->frames as $k => $frame){
+            $this->frames[$k] = str_replace(["\n", "\r"], "", TextFormat::colorize($frame));
+        }
     }
 
     public function getFrames(): array {

@@ -2,9 +2,13 @@
 
 namespace nasiridrishi\primehologram;
 
+use nasiridrishi\primehologram\animation\Animation;
 use nasiridrishi\primehologram\animation\AnimationManager;
+use nasiridrishi\primehologram\hologram\Hologram;
 use nasiridrishi\primehologram\hook\PrimeHook;
 use nasiridrishi\primehologram\hook\PrimePlaceHolderHook;
+use pocketmine\command\Command;
+use pocketmine\command\CommandSender;
 use pocketmine\plugin\PluginBase;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\scheduler\TaskHandler;
@@ -49,27 +53,47 @@ class PrimeHologram extends PluginBase{
      * @throws \JsonException
      */
     protected function onEnable(): void {
-
         $this->placeHolderHook = $this->findHook("PrimePlaceHolder", PrimePlaceHolderHook::class);
-
         $this->getServer()->getPluginManager()->registerEvents(new HologramListener($this), $this);
-        $this->fromConfig();
+        $this->reloadPlugin();
+    }
+
+    /**
+     * @throws \JsonException
+     */
+    public function onCommand(CommandSender $sender, Command $command, string $label, array $args): bool {
+        if($command->getName() == "holoreload") {
+            $this->getLogger()->info(TextFormat::YELLOW . "Reloading PrimeHologram...");
+            $this->reloadConfig();
+            $this->reloadPlugin();
+            $this->getLogger()->info(TextFormat::GREEN . "PrimeHologram reloaded!");
+        }
+        return true;
     }
 
     /**
      * @throws \JsonException
      */
     private function reloadPlugin(): void{
-        $this->reloadConfig();
         //de-spawn all holograms
         foreach($this->holograms as $hologram) {
-            foreach($this->getServer()->getOnlinePlayers() as $player) {
-                $hologram->despawnFrom($player);
-            }
+            $hologram->despawnFromAll();
         }
         $this->holograms = [];
         $this->hologramWorlds = [];
-        $this->fromConfig();
+        $this->animationManager->setAnimations([]);
+        $this->loadHolosFromConfig();
+        $this->startHologramTicks();
+        $this->loadAnimationsFromConfig();
+
+        //show holograms to world players
+        foreach($this->holograms as $hologram) {
+            foreach($this->getServer()->getOnlinePlayers() as $player) {
+                if($player->getWorld()->getId() === $hologram->getWorld()->getId()) {
+                    $hologram->spawnTo($player);
+                }
+            }
+        }
     }
 
     private function startHologramTicks(): void{
@@ -113,11 +137,8 @@ class PrimeHologram extends PluginBase{
         }
     }
 
-    /**
-     * @throws \JsonException
-     */
-    public function fromConfig(): void{
-        $holoDir = $this->getDataFolder() . "holograms/";
+    public function loadHolosFromConfig(): void{
+        $holoDir = $this->getDataFolder() . "holograms" . DIRECTORY_SEPARATOR;
         if(!is_dir($holoDir)) {
             mkdir($holoDir);
         }
@@ -130,12 +151,12 @@ class PrimeHologram extends PluginBase{
             $this->saveResource("holograms/default.yml");
         }else{
             foreach($files as $file) {
-                $config = new Config($file, Config::YAML);
-                if(!$config["enabled"]) {
+                $config = new Config($holoDir . $file, Config::YAML);
+                if(!$config->get("enabled", true)) {
                     continue;
                 }
                 //position: world;0;0;0
-                $posString = $config["position"];
+                $posString = $config->get("position");
                 $posArray = explode(";", $posString);
                 $world = Server::getInstance()->getWorldManager()->getWorldByName($posArray[0]);
                 if($world === null) {
@@ -148,13 +169,21 @@ class PrimeHologram extends PluginBase{
                     $this->getLogger()->warning("Could not load hologram " . $file . "! Invalid position format!");
                     continue;
                 }
-                $lines = $config["lines"];
-                $text = "";
-                foreach($lines as $line) {
-                    $text .= $line . "\n";
-                }
-                $this->registerHologram(new Hologram($position, $text));
+                $lines = $config->get("lines");
+                $this->registerHologram(new Hologram($position, $lines, $config->get("line-spacing", 0.3)));
             }
+        }
+    }
+
+    private function loadAnimationsFromConfig(): void{
+        $this->saveDefaultConfig();
+        $animations = $this->getConfig()->get("animations");
+        if(is_array($animations)){
+            foreach($animations as $name => $animation){
+                $this->animationManager->addAnimation($name, new Animation($animation["lines"]));
+            }
+        }else{
+            $this->getLogger()->warning("Could not load animations from config! Invalid format!");
         }
     }
 

@@ -3,6 +3,7 @@
 namespace nasiridrishi\primehologram\animation;
 
 use nasiridrishi\primehologram\PrimeHologram;
+use pocketmine\utils\TextFormat;
 
 class AnimationManager {
 
@@ -30,6 +31,7 @@ class AnimationManager {
             return;
         }
         $this->animations[$name] = $animation;
+        PrimeHologram::getInstance()->getLogger()->info(TextFormat::GREEN . "Registered animation with name $name");
     }
 
     public function getAnimation(string $name): ?Animation{
@@ -44,7 +46,14 @@ class AnimationManager {
         return $this->animations;
     }
 
-    public function setAnimations(string $c): string {
+    /**
+     * @param array $animations
+     */
+    public function setAnimations(array $animations): void {
+        $this->animations = $animations;
+    }
+
+    public function setFrames(string $c): string {
         if(preg_match_all("/\{([^}]+)\}/", $c, $matches)){
             foreach($matches[1] as $match){
                 $animation = $this->getAnimation($match);

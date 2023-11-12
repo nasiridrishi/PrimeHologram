@@ -1,7 +1,9 @@
 position: world;0;0;0
 enabled: false
+#space between lines
+line-spacing: 0.3
 lines:
-  - '&7Welcome to the server!'
+  - '&7Welcome to the {animation:primegames}!' #see config.yml::animations
   - '&e'
   - '&7You name: %player%'
   - '&7You are currently playing on &aServer Name&7!'

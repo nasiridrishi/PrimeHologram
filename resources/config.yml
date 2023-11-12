@@ -3,10 +3,13 @@ refresh-rate: 20
 
 animations:
   # The animation name
-  example:
+  primegames:
     # The animation lines (supports placeholders: https://github.com/nasiridrishi/PrimeScoreboard)
     lines:
-      - "Hello World 1"
-      - "Hello World 2"
-      - "Hello World 3"
-      - "Hello World 3"
+      - "&4&lPrimeGames"
+      - "&c&lP&a&lrimeGames"
+      - "&e&lPr&4&lime&a&lGames"
+      - "&a&lPri&c&lme&e&lGam&4&les"
+      - "&4&lPrime&a&lGames"
+      - "&c&lP&e&lrime&a&lGames"
+      - "&e&lPr&4&lime&a&lGames"
